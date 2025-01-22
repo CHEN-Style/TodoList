@@ -6,14 +6,20 @@ function App() {
   const [todoList, setTodoList] = useState([])
   const [taskTitle, setTaskTitle]= useState('')
 
+  // 渲染页面时获取localStorage
   useEffect(() => {
     const storedTodos = localStorage.getItem('TODOS')
-    setTodoList(JSON.parse(storedTodos))
+    setTodoList(JSON.parse(storedTodos) || [])
   }, [])
 
   // todoList变化就更新localStorage
   useEffect(()=>{
-    localStorage.setItem('TODOS', JSON.stringify(todoList))
+    /*
+     * !!! 问题出在这里，为什么这里需要判断todoList.length的长度才能防止“刷新页面时，TODOS会被重置为空数组[]”
+     */
+    if (todoList.length > 0) {
+      localStorage.setItem('TODOS', JSON.stringify(todoList))
+    }
   }, [todoList])
 
   function handleTitleInput(e) {

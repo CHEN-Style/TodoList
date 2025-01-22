@@ -1,0 +1,75 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  height: 100vh;
+  width: 100vw;
+  margin: 0px;
+}
+
+#root {
+  height: 100vh;
+  width: 100vw;
+  margin: 0px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 30px;
+}
+
+/* ------------------------------------------------------------------------------------ */
+.title {
+  font-size: 3em;
+  align-items: center;
+
+  margin-top: 30px;
+}
+
+/* ------------------------------------------------------------------------------------ */
+.newTodoBox {
+  height: 40px;
+  width: 100%;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+.userInputTitle {
+  height: 40px;
+  width: 40%;
+}
+
+.newTodoBtn {
+  height: 40px;
+  width: 90px;
+}
+
+/* ------------------------------------------------------------------------------------ */
+.showTodoBox {
+  width: 80%;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+.todoBox {
+  width: 80%;
+  height: 50px;
+  
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}

@@ -220,6 +220,57 @@ function App() {
     )
   }
 
+  // 按未完成排序
+  const SortByUndo = () => {
+    const [undoList, setUndoList] = useState([])
+
+    function createUndoList() {
+      const tempUndoList = todoList.filter(item => !item.isCompleted)
+      setUndoList(tempUndoList)
+    }
+
+    useEffect(() => {
+      createUndoList()
+    }, [todoList])
+
+    return (
+      undoList.length > 0 ? undoList.map(todo => (
+        <div className='todoBox' key={todo.id}>
+          <input type="checkbox" className='checkbox' checked={todo.isCompleted} onChange={()=>{handleTodoIsCompleted(todo)}}/>
+          <div className={todo.isCompleted ? 'todoTitle-comp' : 'todoTitle-incomp'} onClick={()=>handleTodoInfo(todo)}>{todo.name}</div>
+          <button className='deletTodoBtn' onClick={()=>{handleTempDelete(todo)}}>删除</button>
+        </div>
+      )) : (
+        <div>No task</div>
+      )
+    )
+  }
+
+  const SortByDone = () => {
+    const [doneList, setDoneList] = useState([])
+
+    function createDoneList() {
+      const tempDoneList = todoList.filter(item => item.isCompleted)
+      setDoneList(tempDoneList)
+    }
+
+    useEffect(() => {
+      createDoneList()
+    }, [todoList])
+
+    return (
+      doneList.length > 0 ? doneList.map(todo => (
+        <div className='todoBox' key={todo.id}>
+          <input type="checkbox" className='checkbox' checked={todo.isCompleted} onChange={()=>{handleTodoIsCompleted(todo)}}/>
+          <div className={todo.isCompleted ? 'todoTitle-comp' : 'todoTitle-incomp'} onClick={()=>handleTodoInfo(todo)}>{todo.name}</div>
+          <button className='deletTodoBtn' onClick={()=>{handleTempDelete(todo)}}>删除</button>
+        </div>
+      )) : (
+        <div>No task</div>
+      )
+    )
+  }
+
 
 
   return (
@@ -234,6 +285,8 @@ function App() {
         {selectedButton === 1 && <SortDefult/>}
         {selectedButton === 2 && <SortByDate/>}
         {selectedButton === 3 && <SortByPriority/>}
+        {selectedButton === 4 && <SortByUndo/>}
+        {selectedButton === 5 && <SortByDone/>}
         {/* {
           todoList.length > 0 ? todoList.map(todo => (
             <div className='todoBox' key={todo.id}>
@@ -250,6 +303,8 @@ function App() {
         <button className='sortDefult' onClick={()=>handleClick(1)}>默认排序</button>
         <button className='sortByDate' onClick={()=>handleClick(2)}>按时间排序</button>
         <button className='sortByDate' onClick={()=>handleClick(3)}>按优先级排序</button>
+        <button className='sortByDate' onClick={()=>handleClick(4)}>未完成</button>
+        <button className='sortByDate' onClick={()=>handleClick(5)}>已完成</button>
       </div>
 
       {showModal && (

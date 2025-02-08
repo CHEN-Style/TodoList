@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react'
+import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import './App.css'
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
+
 
 function App() {
 
@@ -9,6 +13,7 @@ function App() {
 
   // 控制弹窗
   const [showModal, setShowModal] = useState(false)
+  const [open, setOpen] = useState(false)
   // 存储临时的todo给组件使用
   const [tempTodo, setTempTodo] = useState([])
   // 存储临时的优先级
@@ -125,6 +130,18 @@ function App() {
     setShowModal(false)
   }
 
+  const handleAlertOpen = () => {
+    setOpen(true);
+  }
+
+  const handleAlertClose = (event, reason) => {
+    // 如果点击了点击空白区域而非关闭按钮，可以选择忽略
+    if (reason === 'clickaway') {
+      return;
+    }
+    setOpen(false);
+  };
+
   // ------------------------------------------------------------------------------------------------------------------------ 组件部分
   const [selectedButton, setSelectedButton] = useState(1)
   // 控制侧边栏按钮
@@ -136,10 +153,19 @@ function App() {
   const SortDefult = () => {
     return (
       todoList.length > 0 ? todoList.map(todo => (
-        <div className='todoBox' key={todo.id}>
-          <input type="checkbox" className='checkbox' checked={todo.isCompleted} onChange={()=>{handleTodoIsCompleted(todo)}}/>
+        <div className={`todoBox ${todo.isCompleted ? 'todoBox-completed' : ''}`} key={todo.id}>
+          {/* <input type="checkbox" className='checkbox' checked={todo.isCompleted} onChange={()=>{handleTodoIsCompleted(todo)}}/> */}
+          <label className="container">
+            <input type="checkbox" checked={todo.isCompleted} onChange={()=>{handleTodoIsCompleted(todo)}}/>
+            <div className="checkmark"></div>
+          </label>
           <div className={todo.isCompleted ? 'todoTitle-comp' : 'todoTitle-incomp'} onClick={()=>handleTodoInfo(todo)}>{todo.name}</div>
-          <button className='deletTodoBtn' onClick={()=>{handleTempDelete(todo)}}>删除</button>
+          {/* <button className='deletTodoBtn' onClick={()=>{handleTempDelete(todo)}}>删除</button> */}
+          <button className="delete-button" onClick={()=>{handleTempDelete(todo)}}>
+            <svg className="delete-svgIcon" viewBox="0 0 448 512">
+                              <path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"></path>
+                            </svg>
+          </button>
         </div>
       )) : (
         <div>No task</div>
@@ -174,13 +200,27 @@ function App() {
      
     return (
       dateList.length > 0 ? dateList.map(todos => (
-        <div key={todos[0].date} className='showTodoBox'>
+        <div key={todos[0].date} className='showTodoBox-dom'>
           <h3>{todos[0].date}</h3>
           {todos.map(todo => (
-            <div className='todoBox' key={todo.id}>
-              <input type="checkbox" className='checkbox' checked={todo.isCompleted} onChange={()=>{handleTodoIsCompleted(todo)}}/>
-              <div className={todo.isCompleted ? 'todoTitle-comp' : 'todoTitle-incomp'}>{todo.name}</div>
-              <button className='deletTodoBtn' onClick={()=>{handleTempDelete(todo)}}>删除</button>
+            // <div className='todoBox' key={todo.id}>
+            //   <input type="checkbox" className='checkbox' checked={todo.isCompleted} onChange={()=>{handleTodoIsCompleted(todo)}}/>
+            //   <div className={todo.isCompleted ? 'todoTitle-comp' : 'todoTitle-incomp'}>{todo.name}</div>
+            //   <button className='deletTodoBtn' onClick={()=>{handleTempDelete(todo)}}>删除</button>
+            // </div>
+            <div className={`todoBox ${todo.isCompleted ? 'todoBox-completed' : ''}`} key={todo.id}>
+              {/* <input type="checkbox" className='checkbox' checked={todo.isCompleted} onChange={()=>{handleTodoIsCompleted(todo)}}/> */}
+              <label className="container">
+                <input type="checkbox" checked={todo.isCompleted} onChange={()=>{handleTodoIsCompleted(todo)}}/>
+                <div className="checkmark"></div>
+              </label>
+              <div className={todo.isCompleted ? 'todoTitle-comp' : 'todoTitle-incomp'} onClick={()=>handleTodoInfo(todo)}>{todo.name}</div>
+              {/* <button className='deletTodoBtn' onClick={()=>{handleTempDelete(todo)}}>删除</button> */}
+              <button className="delete-button" onClick={()=>{handleTempDelete(todo)}}>
+                <svg className="delete-svgIcon" viewBox="0 0 448 512">
+                                  <path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"></path>
+                                </svg>
+              </button>
             </div>
           ))}
         </div>
@@ -206,13 +246,41 @@ function App() {
       createPriorityList()
     }, [todoList])
 
+    function getPriorityClass(priority) {
+      // 这里根据 priority 的范围返回不同的 class 名，可以根据需求自定义
+      if (priority <= 1) {
+        return 'priority-vlow'      
+      } else if (priority <= 3) {
+        return 'priority-low'
+      } else if (priority <= 5) {
+        return 'priority-medium'  
+      } else if (priority <= 7) {
+        return 'priority-high'
+      } else {
+        return 'priority-vhigh'  
+      }
+    }
+
     return (
       priorityList.length > 0 ? priorityList.map(todo => (
-        <div className='todoBox' key={todo.id}>
-          <input type="checkbox" className='checkbox' checked={todo.isCompleted} onChange={()=>{handleTodoIsCompleted(todo)}}/>
-          <div className='todoTitle-incomp'>priority: {todo.priority}</div>
+        <div className={`todoBox ${todo.isCompleted ? 'todoBox-completed' : ''}`} key={todo.id}>
+          {/* <input type="checkbox" className='checkbox' checked={todo.isCompleted} onChange={()=>{handleTodoIsCompleted(todo)}}/> */}
+          <label className="container">
+            <input type="checkbox" checked={todo.isCompleted} onChange={()=>{handleTodoIsCompleted(todo)}}/>
+            <div className="checkmark"></div>
+          </label>
           <div className={todo.isCompleted ? 'todoTitle-comp' : 'todoTitle-incomp'} onClick={()=>handleTodoInfo(todo)}>{todo.name}</div>
-          <button className='deletTodoBtn' onClick={()=>{handleTempDelete(todo)}}>删除</button>
+          {/* <button className='deletTodoBtn' onClick={()=>{handleTempDelete(todo)}}>删除</button> */}
+          <div className={`cardPriority ${getPriorityClass(todo.priority)}`} >
+            <div className="contentPriority">
+              <p className="heading">{todo.priority}</p>
+            </div>
+          </div>
+          <button className="delete-button" onClick={()=>{handleTempDelete(todo)}}>
+            <svg className="delete-svgIcon" viewBox="0 0 448 512">
+                              <path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"></path>
+                            </svg>
+          </button>
         </div>
       )) : (
         <div>No task</div>
@@ -235,10 +303,19 @@ function App() {
 
     return (
       undoList.length > 0 ? undoList.map(todo => (
-        <div className='todoBox' key={todo.id}>
-          <input type="checkbox" className='checkbox' checked={todo.isCompleted} onChange={()=>{handleTodoIsCompleted(todo)}}/>
+        <div className={`todoBox ${todo.isCompleted ? 'todoBox-completed' : ''}`} key={todo.id}>
+          {/* <input type="checkbox" className='checkbox' checked={todo.isCompleted} onChange={()=>{handleTodoIsCompleted(todo)}}/> */}
+          <label className="container">
+            <input type="checkbox" checked={todo.isCompleted} onChange={()=>{handleTodoIsCompleted(todo)}}/>
+            <div className="checkmark"></div>
+          </label>
           <div className={todo.isCompleted ? 'todoTitle-comp' : 'todoTitle-incomp'} onClick={()=>handleTodoInfo(todo)}>{todo.name}</div>
-          <button className='deletTodoBtn' onClick={()=>{handleTempDelete(todo)}}>删除</button>
+          {/* <button className='deletTodoBtn' onClick={()=>{handleTempDelete(todo)}}>删除</button> */}
+          <button className="delete-button" onClick={()=>{handleTempDelete(todo)}}>
+            <svg className="delete-svgIcon" viewBox="0 0 448 512">
+                              <path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"></path>
+                            </svg>
+          </button>
         </div>
       )) : (
         <div>No task</div>
@@ -260,10 +337,19 @@ function App() {
 
     return (
       doneList.length > 0 ? doneList.map(todo => (
-        <div className='todoBox' key={todo.id}>
-          <input type="checkbox" className='checkbox' checked={todo.isCompleted} onChange={()=>{handleTodoIsCompleted(todo)}}/>
+        <div className={`todoBox ${todo.isCompleted ? 'todoBox-completed' : ''}`} key={todo.id}>
+          {/* <input type="checkbox" className='checkbox' checked={todo.isCompleted} onChange={()=>{handleTodoIsCompleted(todo)}}/> */}
+          <label className="container">
+            <input type="checkbox" checked={todo.isCompleted} onChange={()=>{handleTodoIsCompleted(todo)}}/>
+            <div className="checkmark"></div>
+          </label>
           <div className={todo.isCompleted ? 'todoTitle-comp' : 'todoTitle-incomp'} onClick={()=>handleTodoInfo(todo)}>{todo.name}</div>
-          <button className='deletTodoBtn' onClick={()=>{handleTempDelete(todo)}}>删除</button>
+          {/* <button className='deletTodoBtn' onClick={()=>{handleTempDelete(todo)}}>删除</button> */}
+          <button className="delete-button" onClick={()=>{handleTempDelete(todo)}}>
+            <svg className="delete-svgIcon" viewBox="0 0 448 512">
+                              <path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"></path>
+                            </svg>
+          </button>
         </div>
       )) : (
         <div>No task</div>
@@ -271,22 +357,33 @@ function App() {
     )
   }
 
-
+  
 
   return (
     <>
-      <div className='title'>TODO LIST</div>
+      <div className='title'>TODO LIST 📝 待办事件薄</div>
       <div className='newTodoBox'>
-        <input type="text" className='userInputTitle' value={taskTitle} onChange={handleTitleInput}/>
-        <button className='newTodoBtn' onClick={newTask}>新增事项</button>
-        <button className='newTodoBtn' onClick={testFunc}>Test btn</button>
+        <input type="text" className='userInputTitle' placeholder='🍟 新增待办事项...' value={taskTitle} onChange={handleTitleInput}/>
+        <button className='newTodoBtn' onClick={() => {newTask(); handleAlertOpen()}}>新增事项</button>
+        {/* <button className='newTodoBtn' onClick={testFunc}>Test btn</button> */}
       </div>
       <div className='showTodoBox'>
-        {selectedButton === 1 && <SortDefult/>}
-        {selectedButton === 2 && <SortByDate/>}
-        {selectedButton === 3 && <SortByPriority/>}
-        {selectedButton === 4 && <SortByUndo/>}
-        {selectedButton === 5 && <SortByDone/>}
+      <TransitionGroup>
+        <CSSTransition
+          key={selectedButton}      // 每次切换时 key 变化，触发动画
+          timeout={300}             // 动画持续时间，与 CSS 中的 transition 时间保持一致
+          classNames="fade"         // 动画类名前缀
+        >
+          {/* 为了让 CSSTransition 包裹单个 DOM 节点，这里用一个 <div> 包裹 */}
+          <div className='showTodoBox-dom'>
+            {selectedButton === 1 && <SortDefult/>}
+            {selectedButton === 2 && <SortByDate/>}
+            {selectedButton === 3 && <SortByPriority/>}
+            {selectedButton === 4 && <SortByUndo/>}
+            {selectedButton === 5 && <SortByDone/>}
+          </div>
+        </CSSTransition>
+      </TransitionGroup>
         {/* {
           todoList.length > 0 ? todoList.map(todo => (
             <div className='todoBox' key={todo.id}>
@@ -299,12 +396,31 @@ function App() {
           )
         } */}
       </div>
+      {/* <div className='btnContainer'>
+        <button className='sortBtn' onClick={()=>handleClick(1)}>默认排序</button>
+        <button className='sortBtn' onClick={()=>handleClick(2)}>按时间排序</button>
+        <button className='sortBtn' onClick={()=>handleClick(3)}>按优先级排序</button>
+        <button className='sortBtn' onClick={()=>handleClick(4)}>未完成</button>
+        <button className='sortBtn' onClick={()=>handleClick(5)}>已完成</button>
+      </div> */}
       <div className='btnContainer'>
-        <button className='sortDefult' onClick={()=>handleClick(1)}>默认排序</button>
-        <button className='sortByDate' onClick={()=>handleClick(2)}>按时间排序</button>
-        <button className='sortByDate' onClick={()=>handleClick(3)}>按优先级排序</button>
-        <button className='sortByDate' onClick={()=>handleClick(4)}>未完成</button>
-        <button className='sortByDate' onClick={()=>handleClick(5)}>已完成</button>
+        <div className="cards">
+            <div className="card lightblue" onClick={()=>handleClick(1)}>
+                <p className="tip">默认排序</p>
+            </div>
+            <div className="card lightblue" onClick={()=>handleClick(2)}>
+                <p className="tip">按时间排序</p>
+            </div>
+            <div className="card lightblue" onClick={()=>handleClick(3)}>
+                <p className="tip">按优先级排序</p>
+            </div>
+            <div className="card lightblue" onClick={()=>handleClick(4)}>
+                <p className="tip">未完成的事项</p>
+            </div>
+            <div className="card lightblue" onClick={()=>handleClick(5)}>
+                <p className="tip">已完成的事项</p>
+            </div>
+        </div>
       </div>
 
       {showModal && (
@@ -316,6 +432,19 @@ function App() {
           <button className='button' onClick={handleModalCancel}>取消</button>
         </div>
       )}
+
+      <Snackbar
+        open={open}
+        autoHideDuration={6000} // 6秒后自动关闭
+        onClose={handleAlertClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }} // 定位在页面顶部居中
+      >
+        <Alert onClose={handleAlertClose} severity="success" sx={{ width: '100%' }}>
+        🐑新增待办事项成功🐑
+        </Alert>
+      </Snackbar>
+
+      <div className='buttomBar'></div>
 
     </>
   )

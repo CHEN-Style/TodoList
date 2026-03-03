@@ -10,7 +10,7 @@ function App() {
   const [todoList, setTodoList] = useState([])
   const [taskTitle, setTaskTitle]= useState('')
   const [tempDelTodos, setTempDelTodos] = useState([])
-  const [revrese, setRevres] = useState(false)
+  const [reverse, setReverse] = useState(false)
 
   // 控制弹窗
   const [showModal, setShowModal] = useState(false)
@@ -27,11 +27,9 @@ function App() {
     setTodoList(JSON.parse(storedTodos) || [])
   }, [])
 
-  // todoList变化就更新localStorage
-  useEffect(()=>{
-    if (todoList.length > 0) {
-      localStorage.setItem('TODOS', JSON.stringify(todoList))
-    } 
+  // todoList变化就更新localStorage（包括清空时）
+  useEffect(() => {
+    localStorage.setItem('TODOS', JSON.stringify(todoList))
   }, [todoList])
 
   // 渲染页面时获取 回收站
@@ -40,11 +38,9 @@ function App() {
     setTempDelTodos(JSON.parse(storedTempDel) || [])
   }, [])
 
-  // tempDelTodos变化就更新 回收站
-  useEffect(()=>{
-    if (tempDelTodos.length > 0) {
-      localStorage.setItem('TempDel', JSON.stringify(tempDelTodos))
-    }
+  // tempDelTodos变化就更新回收站（包括清空时）
+  useEffect(() => {
+    localStorage.setItem('TempDel', JSON.stringify(tempDelTodos))
   }, [tempDelTodos])
   // -------------------------------------------------------------------------------------------------------- useEffect
 
@@ -53,25 +49,24 @@ function App() {
   }
 
   function newTask() {
+    const trimmedTitle = taskTitle.trim()
+    if (!trimmedTitle) return
+
     const timestamp = Date.now()
     const date = new Date(timestamp)
     const formateDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`
 
     const newTodo = {
-      id: timestamp,                                      // 根据时间生成id
-      name: taskTitle,                                     // 用户输入的任务名称
-      content: ["", "", "", "", ""],                       // 内容初始化为空字符串，最多五条
-      priority: 3,                                         // 默认优先级为3
-      isCompleted: false,                                  // 初始为未完成
-      isDeleted: false,                                    // 初始为未删除
+      id: timestamp,
+      name: trimmedTitle,
+      content: ["", "", "", "", ""],
+      priority: 3,
+      isCompleted: false,
+      isDeleted: false,
       date: formateDate
     }
     setTodoList([...todoList, newTodo])
     setTaskTitle('')
-  }
-
-  function testFunc() {
-    console.log(todoList)
   }
 
   // --------------------------------------------------------------- 需要学习
@@ -89,20 +84,8 @@ function App() {
   // ------------------------------------------------------------------------
 
   function handleTempDelete(todo) {
-    // 加入回收站
     setTempDelTodos([...tempDelTodos, todo])
-
-    const newTodos = todoList.filter(item => item.id !== todo.id)
-
-    // 这里是为了处理StrictMode下，useEffect在加入了todoList.length > 0的判断，导致了最后一个项目无法正常删除的问题，删除main.jsx中的StrictMode后也就不需要这行代码
-    // 因为删除了唯一一个项目后，todoList.length = 0 也就无法触发useEffect了
-    if (newTodos.length === 0) {
-      setTodoList(newTodos)
-      localStorage.setItem('TODOS', JSON.stringify(newTodos))
-    }
-    // ------------------------------------------------------
-
-    setTodoList(newTodos)
+    setTodoList(todoList.filter(item => item.id !== todo.id))
   }
 
   function handleModalCancel() {
@@ -119,7 +102,7 @@ function App() {
     setTempPriority(value)
   }
 
-  function hanlePriorityChange() {
+  function handlePriorityChange() {
     const newTodoList = todoList.map(item => {
       if (tempTodo.id === item.id) {
         return {...item, priority: tempPriority}
@@ -203,7 +186,7 @@ function App() {
           </button>
         </div>
       )) : (
-        <div>No task</div>
+        <div className="emptyState">暂无待办事项，添加一个开始吧 ✨</div>
       )
     )
   }
@@ -213,32 +196,27 @@ function App() {
     const [dateList, setDateList] = useState([])
 
     function createDateList() {
-      const tempDate = []
-      const tempList = []
-  
+      const dateMap = new Map()
       for (const item of todoList) {
-        if (!tempDate.includes(item.date)) {
-          tempDate.push(item.date)
-          tempList.push([item])
-        } else {
-          const index = tempDate.indexOf(item.date)
-          tempList[index].push(item)
+        if (!dateMap.has(item.date)) {
+          dateMap.set(item.date, [])
         }
+        dateMap.get(item.date).push(item)
       }
-      
-      const result = revrese ? [...tempList].reverse() : tempList;
-      console.log(result)
-      setDateList(result)
+      // 按日期排序（升序），reverse 时倒序
+      const sortedDates = [...dateMap.keys()].sort()
+      const result = sortedDates.map(date => dateMap.get(date))
+      setDateList(reverse ? result.reverse() : result)
     }
 
     useEffect(() => {
       createDateList()
-    }, [todoList])
+    }, [todoList, reverse])
      
     return (
       dateList.length > 0 ? dateList.map(todos => (
-        <div key={todos[0].date} className='showTodoBox-dom'>
-          <h3>{todos[0].date}</h3>
+        <div key={todos[0].date} className='dateGroup'>
+          <h3 className="dateGroupHeader">{todos[0].date}</h3>
           {todos.map(todo => (
             // <div className='todoBox' key={todo.id}>
             //   <input type="checkbox" className='checkbox' checked={todo.isCompleted} onChange={()=>{handleTodoIsCompleted(todo)}}/>
@@ -267,7 +245,7 @@ function App() {
           ))}
         </div>
       )) : (
-        <div>No task</div>
+        <div className="emptyState">暂无待办事项，添加一个开始吧 ✨</div>
       )
 
     )
@@ -278,18 +256,13 @@ function App() {
     const [priorityList, setPriorityList] = useState([])
     
     function createPriorityList() {
-      const tempList = [...todoList]
-      // const tempList = todoList
-      const sortTempList = tempList.sort((a, b) => b.priority - a.priority)
-
-      const result = revrese ? [...sortTempList].reverse() : sortTempList;
-      console.log(result)
-      setPriorityList(result)
+      const sorted = [...todoList].sort((a, b) => b.priority - a.priority)
+      setPriorityList(reverse ? sorted.reverse() : sorted)
     }
 
     useEffect(() => {
       createPriorityList()
-    }, [todoList])
+    }, [todoList, reverse])
 
     return (
       priorityList.length > 0 ? priorityList.map(todo => (
@@ -313,7 +286,7 @@ function App() {
           </button>
         </div>
       )) : (
-        <div>No task</div>
+        <div className="emptyState">暂无待办事项，添加一个开始吧 ✨</div>
       )
     )
   }
@@ -353,7 +326,7 @@ function App() {
           </button>
         </div>
       )) : (
-        <div>No task</div>
+        <div className="emptyState">暂无待办事项，添加一个开始吧 ✨</div>
       )
     )
   }
@@ -387,7 +360,7 @@ function App() {
           </button>
         </div>
       )) : (
-        <div>No task</div>
+        <div className="emptyState">暂无待办事项，添加一个开始吧 ✨</div>
       )
     )
   }
@@ -424,7 +397,7 @@ function App() {
         {/* <p>修改优先级 输入数字0-9</p>
         <input type="text" className='priorityInput' value={tempPriority} onChange={handlePriorityInput}/> */}
         <div className='buttonBox'>
-          <button className='newTodoBtn' onClick={hanlePriorityChange}>确认修改</button>
+          <button className='newTodoBtn' onClick={handlePriorityChange}>确认修改</button>
           <button className='newTodoBtn' onClick={handleModalCancel}>取消</button>
         </div>
 
@@ -438,8 +411,8 @@ function App() {
     <>
       <div className='title'>TODO LIST 📝 待办事件薄</div>
       <div className='newTodoBox'>
-        <input type="text" className='userInputTitle' placeholder='🍟 新增待办事项...' value={taskTitle} onChange={handleTitleInput}/>
-        <button className='newTodoBtn' onClick={() => {newTask(); handleAlertOpen()}}>新增事项</button>
+        <input type="text" className='userInputTitle' placeholder='🍟 新增待办事项...' value={taskTitle} onChange={handleTitleInput} onKeyDown={(e) => { if (e.key === 'Enter' && taskTitle.trim()) { e.preventDefault(); newTask(); handleAlertOpen(); }}}/>
+        <button className='newTodoBtn' onClick={() => {if (taskTitle.trim()) { newTask(); handleAlertOpen(); }}}>新增事项</button>
         {/* <button className='newTodoBtn' onClick={testFunc}>Test btn</button> */}
       </div>
       <div className='showTodoBox'>
@@ -478,7 +451,7 @@ function App() {
             <p className="tip">已完成的事项</p>
         </div>
         {[2, 3].includes(selectedButton) && (
-        <div className={`card lightblue`} onClick={()=>setRevres(!revrese)}>
+        <div className={`card lightblue`} onClick={()=>setReverse(!reverse)}>
             <p className="tip">倒序显示</p>
         </div>
         )}
